@@ -11,8 +11,8 @@ namespace Shortener1.Services
         
         private readonly string host = "localhost/";
         private readonly string successUrlCreatedMessage = "New shortened url was created!";
-        private readonly string urlCreatedFailedMessage = "Failed to create new shortened url! See massage: ";
-        private readonly string failedToFindLongUrlFromShortened = "Long url for redirect was`t found! See massage: ";
+        
+        
 
         public UrlMapServiceImpl(IUrlMapRepository urlMapRepository)
         {
@@ -21,7 +21,8 @@ namespace Shortener1.Services
 
 
         // Checks if original long Urks already exists in Db
-        public bool LongUrlExist(UrlInputDTO urlInputDTO) {
+        public bool LongUrlExist(UrlInputDTO urlInputDTO) 
+        {
             try
             {
                 return _urlMapRepository.ChekIfLongUrlExist(urlInputDTO);
@@ -36,21 +37,14 @@ namespace Shortener1.Services
         // Creates new urlMap and save it in Db.
         public UrlOutputDTO CreateNewShortenedUrl (UrlInputDTO urlInputDTO) 
         {
-            try
-            {
-                var shortenedUrl = host + ShortUrlGenerator();
+          var shortenedUrl = host + GenerateShortUrl();
 
-                UrlMap urlMap = new(new Random().Next(), urlInputDTO.Url, shortenedUrl, DateTime.Now);
+          UrlMap urlMap = new (new Random().Next(), urlInputDTO.Url, shortenedUrl, DateTime.Now);
 
-                _urlMapRepository.SaveNewUrlMap(urlMap);
+          _urlMapRepository.SaveNewUrlMap(urlMap);
 
-                return new (urlMap.shortenedUrl, urlMap.originalUrl, successUrlCreatedMessage);
+          return new (urlMap.shortenedUrl, urlMap.originalUrl, successUrlCreatedMessage);
            
-            }
-            catch (Exception ex)
-            {
-                return new UrlOutputDTO(urlCreatedFailedMessage + ex);
-            }
         }
 
 
@@ -59,35 +53,22 @@ namespace Shortener1.Services
       
         
         //Returns original long url according to it`s shortened version.
-        public UrlOutputDTO GetLongUrlForRedirect(UrlInputDTO urlInputDTO) {
-            try
-            {
-              return  _urlMapRepository.GetLongUrlByShortenedUrl(urlInputDTO);
-            }
-            catch (Exception ex)
-            {
-                return new(failedToFindLongUrlFromShortened + ex.Message);
-            }
-
-         }
+        public UrlOutputDTO GetLongUrlForRedirect(UrlInputDTO urlInputDTO) 
+        {
+            return  _urlMapRepository.GetLongUrlByShortenedUrl(urlInputDTO);
+        }
 
         
         // return all urlMaps from Db.
         public List<UrlMap> GetAll()
         {
-            try
-            {
-                return _urlMapRepository.GetAll();
-            }
-            catch (Exception ex)
-            {
-                return new List<UrlMap>(); 
-            }
+            return _urlMapRepository.GetAll();
+            
         } 
 
 
         // Generates short url 
-        private string ShortUrlGenerator() 
+        private string GenerateShortUrl() 
         {
             Random random = new Random();
             int randomNumber = random.Next(10000, 99999);

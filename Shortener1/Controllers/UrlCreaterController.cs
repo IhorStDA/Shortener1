@@ -11,50 +11,87 @@ namespace Shortener1.Controllers
     public class UrlCreaterController : ControllerBase
     {
 
-        private readonly ILogger<UrlCreaterController> _logger;
+        
         private readonly IUrlMapService _urlMapService;
+
         private readonly string urlCreatedFailedMessageInvalidStructure = "Failed to create new shortened url! Url is Invalid!";
         private readonly string urlCreatedFailedMessageUrlIsDublicate = "Failed to create new shortened url! It is already exists!";
-     
-        
-        public UrlCreaterController(ILogger<UrlCreaterController> logger, IUrlMapService urlMapService)
+        private readonly string failedToFindLongUrlFromShortened = "Long url for redirect was`t found! See massage: ";
+        private readonly string urlCreatedFailedMessage = "Failed to create new shortened url! See massage: ";
+
+
+        public UrlCreaterController( IUrlMapService urlMapService)
         {
-            _logger = logger;
-            _urlMapService = urlMapService;
+           _urlMapService = urlMapService;
         }
 
 
 
         [HttpGet("getAll")]
-        public List<UrlMap> GetAll()
+        [ProducesResponseType(200, Type = typeof(List<UrlOutputDTO>))]
+        [ProducesResponseType(500)]
+        public IActionResult GetAll()
         {
-            return _urlMapService.GetAll();
+            try
+            {
+                return Ok(_urlMapService.GetAll());
+            }
+            catch (Exception ex) 
+            {
+                return StatusCode(500, ex);
+            }
         }
 
 
+
         [HttpPost("create")]
-        public UrlOutputDTO createNewShortUrl([FromBody] UrlInputDTO urlInputDTO)
+        [ProducesResponseType(400)]
+        [ProducesResponseType(409)]
+        [ProducesResponseType(500)]
+        [ProducesResponseType(200, Type = typeof(UrlOutputDTO))]
+        public IActionResult CreateNewShortUrl([FromBody] UrlInputDTO urlInputDTO)
         {
             //1. check if Url is valid 
             if (!IsValidUrl(urlInputDTO.Url))
             {
-                return new(urlCreatedFailedMessageInvalidStructure);
+                return BadRequest(urlCreatedFailedMessageInvalidStructure);
 
             }
 
             // check if long Url already exist in db
             if (_urlMapService.LongUrlExist(urlInputDTO))
             {
-                return new(urlCreatedFailedMessageUrlIsDublicate);
+                return Conflict(urlCreatedFailedMessageUrlIsDublicate);
             }
-                return  _urlMapService.CreateNewShortenedUrl(urlInputDTO);
-         }
+            
+            try
+            {
+                return Ok(_urlMapService.CreateNewShortenedUrl(urlInputDTO));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, urlCreatedFailedMessage + ex.Message);
+            }
+        
+        }
+
 
 
         [HttpPost("getLong")]
-        public UrlOutputDTO getlongUrl([FromBody] UrlInputDTO urlInputDTO)
+        [ProducesResponseType(200, Type = typeof(UrlOutputDTO))]
+        [ProducesResponseType(404)]
+        
+        public IActionResult GetlongUrl([FromBody] UrlInputDTO urlInputDTO)
         {
-           return _urlMapService.GetLongUrlForRedirect(urlInputDTO);
+            try
+            {
+                return Ok(_urlMapService.GetLongUrlForRedirect(urlInputDTO));
+            }
+            catch (Exception ex)
+            {
+                return NotFound(failedToFindLongUrlFromShortened + ex.Message);
+            }
+            
         }
 
 
@@ -64,7 +101,7 @@ namespace Shortener1.Controllers
             {
                 if (Uri.TryCreate(url, UriKind.Absolute, out Uri result))
                 {
-                    // Проверяем, что протокол HTTP или HTTPS
+                    
                     return result.Scheme == Uri.UriSchemeHttp || result.Scheme == Uri.UriSchemeHttps;
                 }
 
