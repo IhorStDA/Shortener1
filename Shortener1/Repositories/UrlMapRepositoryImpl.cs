@@ -1,65 +1,63 @@
-﻿using ConsoleApp2205.Cofigs;
-using ConsoleApp2205.Entities;
+﻿using ConsoleApp2205.Entities;
+using Microsoft.EntityFrameworkCore;
+using Shortener1.Cofigs;
 using Shortener1.DTO;
-using System.Collections.Generic;
 
-namespace ConsoleApp2205.Repositories
+namespace Shortener1.Repositories
 {
     public class UrlMapRepositoryImpl : IUrlMapRepository
     {
-        private readonly SqlLightContext _sqlLightContext;
-       
+        private readonly DataContext _dataContext;
 
-        
-        public UrlMapRepositoryImpl(SqlLightContext sqlLightContext)
+
+        public UrlMapRepositoryImpl(DataContext dataContext)
         {
-            _sqlLightContext = sqlLightContext;
+            _dataContext = dataContext;
         }
-        
+
 
         // Checks if new long url already exist in Db.
-        public  bool ChekIfLongUrlExist(UrlInputDTO urlInputDTO) 
+        public async Task<bool> CheckIfLongUrlExist(UrlInputDto urlInputDto, int userId)
         {
-          return _sqlLightContext.UrlMap.Any(UrlMap => UrlMap.originalUrl == urlInputDTO.Url);
+            return await _dataContext
+                                .UrlMap
+                                .AnyAsync(UrlMap => UrlMap.OriginalUrl == urlInputDto.Url);
         }
 
 
         // Save new UrlMap to database.
-        public void SaveNewUrlMap(UrlMap urlMap) 
+        public async Task SaveNewUrlMap(UrlMap urlMap)
         {
-            _sqlLightContext.UrlMap.Add(urlMap);
-            _sqlLightContext.SaveChanges();
-
+            await _dataContext.UrlMap.AddAsync(urlMap);
+            await _dataContext.SaveChangesAsync();
         }
 
 
         // Return original long Url from db where input short url matches with short url in UrlMap table. 
-        public UrlOutputDTO GetLongUrlByShortenedUrl(UrlInputDTO urlInputDTO) 
+        public async Task<UrlOutputDTO> GetLongUrlByShortenedUrl(UrlInputDto urlInputDto, int userId)
         {
-            UrlMap url =  _sqlLightContext.UrlMap.Where(u => u.shortenedUrl == urlInputDTO.Url).First();
-           
-            return new (url.shortenedUrl,url.originalUrl, "Url was found!");
-           
-             
+            UrlMap? url = await _dataContext
+                                            .UrlMap
+                                            .Where(u => u.ShortenedUrl == urlInputDto.Url
+                                                              && u.CreatorId == userId)
+                                            .FirstOrDefaultAsync();
+
+            return new UrlOutputDTO(url.ShortenedUrl, url.OriginalUrl, "Url was found!", url.UrlMapId);
         }
 
-        // updates shortened url for already existing UrlMaps in db. Not in use while.
-        public UrlOutputDTO RegenerateShortenedUrlForAlreadyExistingOne(UrlInputDTO urlInputDTO) 
-        { 
-            return null;
-        }
+      
+       
 
-        
+
         // returns all UrlMaps from db.
-        public List<UrlMap> GetAll()
+        public async Task<List<UrlMap>> GetAll(int pageIndex , int pageSize , int userId)
         {
-          return _sqlLightContext.UrlMap.ToList();
-
+            return await _dataContext
+                .UrlMap
+                .Where(u=>u.CreatorId   == userId)
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
         }
-
-
     }
 }
-
-
-

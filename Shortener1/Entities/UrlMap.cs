@@ -1,40 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ConsoleApp2205.Entities
 {
     public class UrlMap
     {
-        [Key]
-        public int urlMapId { get; set; }
-        public string originalUrl { get; set; }
+        public UrlMap()
+        {
+        }
+        public UrlMap(int urlMapId, string originalUrl, string shortenedUrl, DateTime created, int creator)
+        {
+            this.UrlMapId = urlMapId;
+            this.OriginalUrl = originalUrl;
+            this.ShortenedUrl = shortenedUrl;
+            this.Created = created;
+            this.CreatorId = creator;
+        }
 
-        public string shortenedUrl { get; set; }
+        [Key] public int UrlMapId { get; set; }
+        public string OriginalUrl { get; set; }
+        public string ShortenedUrl { get; set; }
+        public int UsegCounter { get; set; }
+        public DateTime Created { get; set; }
 
-        public int usegCounter { get; set; }
+        public int CreatorId { get; set; }
 
-        public DateTime created  { get; set; }
 
         public override string ToString()
         {
-            return $"id = {urlMapId}, originalUrl = {originalUrl}, " +
-                $"shortenedUrl = {shortenedUrl}, usegCounter = {usegCounter}, created = {created}";
-        }
-
-
-
-
-        public UrlMap(int urlMapId, string originalUrl, string shortenedUrl, DateTime created)
-        {
-            this.urlMapId = urlMapId;
-            this.originalUrl = originalUrl;
-            this.shortenedUrl = shortenedUrl;
-            this.created = created;
-            
+            return $"id = {UrlMapId}, originalUrl = {OriginalUrl}, " +
+                   $"shortenedUrl = {ShortenedUrl}, usegCounter = {UsegCounter}," +
+                   $" created = {Created}, creator {CreatorId}";
         }
     }
 }

@@ -5,14 +5,15 @@ namespace Shortener1.Services
 {
     public interface IUrlMapService
     {
-        public bool LongUrlExist(UrlInputDTO urlInputDTO);
+        public Task<bool> LongUrlExist(UrlInputDto urlInputDto, int userId);
 
-        public UrlOutputDTO CreateNewShortenedUrl(UrlInputDTO urlInputDTO);
+        public Task<UrlOutputDTO> CreateNewShortenedUrl(UrlInputDto urlInputDto, int userId);
+        
 
-        public UrlOutputDTO UpdateExistingShortUrl(UrlInputDTO urlInputDTO);
+        public  Task <UrlOutputDTO> GetLongUrlForRedirect(UrlInputDto urlInputDto, int userId);
 
-        public UrlOutputDTO GetLongUrlForRedirect(UrlInputDTO urlInputDTO);
+        public Task<List<UrlMap>> GetAll(int pageIndex ,int pageSize, int userId);
 
-        public List<UrlMap> GetAll();
+     
     }
 }

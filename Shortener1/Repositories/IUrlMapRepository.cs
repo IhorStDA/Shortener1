@@ -1,25 +1,17 @@
 ﻿using ConsoleApp2205.Entities;
 using Shortener1.DTO;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ConsoleApp2205.Repositories
+namespace Shortener1.Repositories
 {
     public interface IUrlMapRepository
     {
-        public bool ChekIfLongUrlExist(UrlInputDTO urlInputDTO);
+        public Task<bool> CheckIfLongUrlExist(UrlInputDto urlInputDto, int userId);
 
-        public void SaveNewUrlMap(UrlMap urlMap);
+        public Task SaveNewUrlMap(UrlMap urlMap);
 
-        public UrlOutputDTO GetLongUrlByShortenedUrl(UrlInputDTO urlInputDTO);
-
-        public UrlOutputDTO RegenerateShortenedUrlForAlreadyExistingOne(UrlInputDTO urlInputDTO);
+        public Task<UrlOutputDTO> GetLongUrlByShortenedUrl(UrlInputDto urlInputDto, int userId);
 
 
-        public List<UrlMap> GetAll();
-
+        public Task<List<UrlMap>> GetAll(int pageIndex , int pageSize , int userId);
     }
-}   
+}

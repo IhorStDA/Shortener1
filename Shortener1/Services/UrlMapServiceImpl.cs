@@ -1,33 +1,31 @@
 ﻿using ConsoleApp2205.Entities;
-using ConsoleApp2205.Repositories;
 using Shortener1.DTO;
-using System.Runtime.CompilerServices;
+using Shortener1.Helpers;
+using Shortener1.Repositories;
 
 namespace Shortener1.Services
 {
     public class UrlMapServiceImpl : IUrlMapService
     {
         private readonly IUrlMapRepository _urlMapRepository;
-        
-        private readonly string host = "localhost/";
-        private readonly string successUrlCreatedMessage = "New shortened url was created!";
-        
-        
+        private readonly IConfiguration _configuration;
 
-        public UrlMapServiceImpl(IUrlMapRepository urlMapRepository)
+
+        public UrlMapServiceImpl(IUrlMapRepository urlMapRepository, IConfiguration configuration)
         {
             _urlMapRepository = urlMapRepository;
+            _configuration = configuration;
         }
 
 
-        // Checks if original long Urks already exists in Db
-        public bool LongUrlExist(UrlInputDTO urlInputDTO) 
+        // Checks if original long Urls already exists in Db
+        public async Task<bool> LongUrlExist(UrlInputDto urlInputDto, int userId)
         {
             try
             {
-                return _urlMapRepository.ChekIfLongUrlExist(urlInputDTO);
+                return await _urlMapRepository.CheckIfLongUrlExist(urlInputDto, userId);
             }
-            catch(Exception ex) 
+            catch (Exception ex)
             {
                 return false;
             }
@@ -35,47 +33,31 @@ namespace Shortener1.Services
 
 
         // Creates new urlMap and save it in Db.
-        public UrlOutputDTO CreateNewShortenedUrl (UrlInputDTO urlInputDTO) 
+        public async Task<UrlOutputDTO> CreateNewShortenedUrl(UrlInputDto urlInputDto, int userId)
         {
-          var shortenedUrl = host + GenerateShortUrl();
+            var shortenedUrl = _configuration["Host"] + HashGenerator.GenerateHash(urlInputDto.Url).ShortenedUrl;
 
-          UrlMap urlMap = new (new Random().Next(), urlInputDTO.Url, shortenedUrl, DateTime.Now);
 
-          _urlMapRepository.SaveNewUrlMap(urlMap);
+            UrlMap urlMap = new(new Random().Next(), urlInputDto.Url, shortenedUrl, DateTime.Now, userId);
 
-          return new (urlMap.shortenedUrl, urlMap.originalUrl, successUrlCreatedMessage);
-           
+            await _urlMapRepository.SaveNewUrlMap(urlMap);
+
+            return new(urlMap.ShortenedUrl, urlMap.OriginalUrl, ResponseMessages.SuccessUrlCreatedMessage,
+                urlMap.UrlMapId);
         }
 
 
-        // Not in use  while
-        public UrlOutputDTO UpdateExistingShortUrl(UrlInputDTO urlInputDTO) { return null; }
-      
-        
         //Returns original long url according to it`s shortened version.
-        public UrlOutputDTO GetLongUrlForRedirect(UrlInputDTO urlInputDTO) 
+        public async Task<UrlOutputDTO> GetLongUrlForRedirect(UrlInputDto urlInputDto, int userId)
         {
-            return  _urlMapRepository.GetLongUrlByShortenedUrl(urlInputDTO);
+            return await _urlMapRepository.GetLongUrlByShortenedUrl(urlInputDto, userId);
         }
 
-        
+
         // return all urlMaps from Db.
-        public List<UrlMap> GetAll()
+        public async Task<List<UrlMap>> GetAll(int pageIndex, int pageSize, int userId)
         {
-            return _urlMapRepository.GetAll();
-            
-        } 
-
-
-        // Generates short url 
-        private string GenerateShortUrl() 
-        {
-            Random random = new Random();
-            int randomNumber = random.Next(10000, 99999);
-            return randomNumber.ToString();
+            return await _urlMapRepository.GetAll(pageIndex, pageSize, userId);
         }
-
-        
-
     }
 }
