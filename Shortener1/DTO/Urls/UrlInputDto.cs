@@ -1,4 +1,4 @@
-﻿namespace Shortener1.DTO
+﻿namespace Shortener1.DTO.Urls
 {
     public record UrlInputDto
     {

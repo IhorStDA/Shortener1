@@ -1,9 +1,8 @@
-﻿using ConsoleApp2205.Entities;
-using Shortener1.Cofigs;
+﻿using Shortener1.Data.Context;
 using Shortener1.Entities;
 using Shortener1.Repositories;
 
-namespace Shortener1.Services;
+namespace Shortener1.Services.Implementations;
 
 public class MarketingDataServiceImpl : IMarketingDataService
 {

@@ -1,55 +1,65 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Shortener1.DTO;
-using Shortener1.Services;
+using Shortener1.Entities;
+using Shortener1.Helpers;
 
 namespace Shortener1.Controllers;
+
 [ApiController]
 [Route("[controller]")]
-
 public class MyUsersController : ControllerBase
 {
-    private readonly IMyUserService _userService;
-    
-    public MyUsersController(IMyUserService userService)
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly IConfiguration _configuration;
+
+    public MyUsersController(UserManager<ApplicationUser> userManager,
+                             SignInManager<ApplicationUser> signInManager,
+                             IConfiguration configuration)
     {
-        _userService = userService;
+        _userManager = userManager;
+        _signInManager = signInManager;
+        _configuration = configuration;
     }
-    
-    
+
     [HttpPost("authenticate")]
     public async Task<IActionResult> Authenticate(AuthenticateRequest model)
     {
-        var response = await _userService.Authenticate(model);
-
-        if (response == null)
+        var user = await _userManager.FindByNameAsync(model.Username);
+        if (user == null)
+        {
             return BadRequest(new { message = ResponseMessages.AuthenticateErrorIncorrectCredentials });
-
-        return Ok(response);
+        }
+        var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, lockoutOnFailure: false);
+        if (!result.Succeeded)
+        {
+            return BadRequest(new { message = ResponseMessages.AuthenticateErrorIncorrectCredentials });
+        }
+        var token = _configuration.GenerateJwtToken(user);
+        return Ok(token);
     }
-    
-    
-    
+
+
     [HttpPost("register")]
     public async Task<IActionResult> Register(MyUserDtO userModel)
     {
-        if (_userService.CheckForDuplicates(userModel).Result.IsDuplicateEmail)
+        var user = new ApplicationUser
         {
-            return BadRequest(new {message = ResponseMessages.RegisterErrorEmailAlreadyExists});
-        }
-        if (_userService.CheckForDuplicates(userModel).Result.IsDuplicateUserName)
+            UserName = userModel.Username,
+            Email = userModel.Email,
+            FirstName = userModel.FirstName,
+            LastName = userModel.LastName,
+            Address = userModel.Address
+        };
+        var result = await _userManager.CreateAsync(user, userModel.Password);
+        if (!result.Succeeded)
         {
-            return BadRequest(new {message = ResponseMessages.RegisterErrorUserNameAlreadyExists});
-        }
-        
-        var response = await _userService.Register(userModel);
-
-        if (response == null)
-        {
-            return BadRequest(new {message = ResponseMessages.RegisterErrorRegistrationFailed});
+            return BadRequest(new { message = ResponseMessages.RegisterErrorRegistrationFailed });
         }
 
-        return Ok(response);
+        var token = _configuration.GenerateJwtToken(user);
+        return Ok(token);
     }
- 
-    
 }

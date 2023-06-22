@@ -1,7 +1,8 @@
-﻿using ConsoleApp2205.Entities;
-using Microsoft.EntityFrameworkCore;
-using Shortener1.Cofigs;
+﻿using Microsoft.EntityFrameworkCore;
+using Shortener1.Data.Context;
 using Shortener1.DTO;
+using Shortener1.DTO.Urls;
+using Shortener1.Entities;
 
 namespace Shortener1.Repositories
 {
@@ -17,7 +18,7 @@ namespace Shortener1.Repositories
 
 
         // Checks if new long url already exist in Db.
-        public async Task<bool> CheckIfLongUrlExist(UrlInputDto urlInputDto, int userId)
+        public async Task<bool> CheckIfLongUrlExist(UrlInputDto urlInputDto, string userId)
         {
             return await _dataContext
                                 .UrlMap
@@ -34,15 +35,15 @@ namespace Shortener1.Repositories
 
 
         // Return original long Url from db where input short url matches with short url in UrlMap table. 
-        public async Task<UrlOutputDTO> GetLongUrlByShortenedUrl(UrlInputDto urlInputDto, int userId)
+        public async Task<UrlOutputDto> GetLongUrlByShortenedUrl(UrlInputDto urlInputDto, string userId)
         {
-            UrlMap? url = await _dataContext
+            var url = await _dataContext
                                             .UrlMap
                                             .Where(u => u.ShortenedUrl == urlInputDto.Url
                                                               && u.CreatorId == userId)
                                             .FirstOrDefaultAsync();
 
-            return new UrlOutputDTO(url.ShortenedUrl, url.OriginalUrl, "Url was found!", url.UrlMapId);
+            return new UrlOutputDto(url?.ShortenedUrl!, url?.OriginalUrl!, "Url was found!", url!.UrlMapId);
         }
 
       
@@ -50,7 +51,7 @@ namespace Shortener1.Repositories
 
 
         // returns all UrlMaps from db.
-        public async Task<List<UrlMap>> GetAll(int pageIndex , int pageSize , int userId)
+        public async Task<List<UrlMap>> GetAll(int pageIndex , int pageSize , string userId)
         {
             return await _dataContext
                 .UrlMap

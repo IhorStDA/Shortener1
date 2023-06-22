@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Shortener1.Cofigs;
+using Shortener1.Data.Context;
 using Shortener1.Entities;
 
-namespace Shortener1.Repositories;
+namespace Shortener1.Repositories.Implementations;
 
 public class MarketingDataRepositoryImpl : IMarketingDataRepository
 
@@ -17,9 +17,11 @@ public class MarketingDataRepositoryImpl : IMarketingDataRepository
     }
 
 
-    public async Task<MarketingData> GetByUrlId(int urlId)
+    public async Task<MarketingData?> GetByUrlId(int urlId)
     {
-        return await _dataContext.MarketingData.Where(data => data.UrlMapId == urlId).FirstOrDefaultAsync();
+        return await _dataContext.MarketingData
+                                 .Where(data => data.UrlMapId == urlId)
+                                 .FirstOrDefaultAsync();
     }
 
     public async Task SaveMarketingData(MarketingData marketingData, DataContext context)

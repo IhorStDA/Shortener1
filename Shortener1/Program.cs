@@ -1,14 +1,18 @@
 using System.Text;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Shortener1;
-using Shortener1.Cofigs;
-using Shortener1.Helpers;
+using Shortener1.Data.Context;
+using Shortener1.Entities;
 using Shortener1.Repositories;
+using Shortener1.Repositories.Implementations;
 using Shortener1.Services;
+using Shortener1.Services.BackgroundServices;
+using Shortener1.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,19 +54,27 @@ builder.Services.AddSwaggerGen(options =>
 
 var connection = builder.Configuration.GetConnectionString("Default");
 builder.Services.AddDbContext<DataContext>(option => option.UseSqlite(connection));
+builder.Services.AddDbContext<UserContext>(option => option.UseSqlite(connection));
         
 
 builder.Services.AddScoped<IUrlMapRepository, UrlMapRepositoryImpl>();
 builder.Services.AddScoped<IUrlMapService, UrlMapServiceImpl>();
-builder.Services.AddScoped<IMyUserRepository, MyUserRepositoryImpl>();
-builder.Services.AddScoped<IMyUserService, MyUserServiceImpl>();
+
 builder.Services.AddScoped<IMarketingDataService, MarketingDataServiceImpl>();
 builder.Services.AddScoped<IMarketingDataRepository, MarketingDataRepositoryImpl>();
+builder.Services.AddScoped<UserManager<ApplicationUser>>();
+builder.Services.AddScoped<SignInManager<ApplicationUser>>();
+builder.Services.AddScoped<AnalyticsBackgroundService>();
 builder.Services.AddTransient<IServiceProvider>(provider => 
                                         provider.GetService<IServiceProviderFactory<IServiceCollection>>()
                                             .CreateServiceProvider(builder.Services));
-builder.Services.AddScoped<AnalyticsBackgroundService>();
+
 builder.Services.AddValidatorsFromAssemblyContaining<UrlInputDtoValidator>();
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<UserContext>();
+
+
 
 builder.Services.AddControllers(options =>
 {
@@ -94,20 +106,16 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseRouting();
-   
     app.UseSwagger();
     app.UseSwaggerUI();
-   
     app.UseCors(x => x
         .AllowAnyOrigin()
         .AllowAnyMethod()
         .AllowAnyHeader());
-    
-    
+
     app.UseAuthentication(); 
-    app.UseAuthorization();
     
-    app.UseMiddleware<JwtMiddleware>();
+    app.UseAuthorization();
     app.UseEndpoints(x => x.MapControllers()); 
     
 }
@@ -115,14 +123,10 @@ else
 {
     app.UseAuthentication();
     app.UseAuthorization();
-
-    app.UseMiddleware<JwtMiddleware>();
-
     app.UseRouting();
+    
     app.UseEndpoints(x => x.MapControllers());
     
 }
-
 app.UseHttpsRedirection();
-
 app.Run();

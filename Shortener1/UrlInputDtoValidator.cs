@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using Shortener1.DTO;
+using Shortener1.DTO.Urls;
 
 namespace Shortener1;
 
@@ -15,15 +15,15 @@ public class UrlInputDtoValidator : AbstractValidator<UrlInputDto>
     {
         try
         {
-            if (Uri.TryCreate(url, UriKind.Absolute, out Uri result))
+            if (Uri.TryCreate(url, UriKind.Absolute, out var result))
             {
                 return result.Scheme == Uri.UriSchemeHttp || result.Scheme == Uri.UriSchemeHttps;
             }
-
             return false;
         }
         catch (Exception ex)
         {
+            Console.WriteLine(ex);
             return false;
         }
     }

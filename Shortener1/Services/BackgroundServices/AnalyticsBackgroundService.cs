@@ -3,7 +3,7 @@ using System.Threading.Channels;
 using Asynq;
 using Shortener1.Entities;
 
-namespace Shortener1.Services;
+namespace Shortener1.Services.BackgroundServices;
 
 public class AnalyticsBackgroundService : BackgroundService
 {
@@ -22,7 +22,7 @@ public class AnalyticsBackgroundService : BackgroundService
     }
 
 
-    private async void StartExecution()
+    private  void StartExecution()
     {
         if (!_analyticsQueue.IsAddingCompleted)
         {

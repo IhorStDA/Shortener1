@@ -1,5 +1,4 @@
-﻿using ConsoleApp2205.Entities;
-using Shortener1.Entities;
+﻿using Shortener1.Entities;
 
 namespace Shortener1.Services;
 

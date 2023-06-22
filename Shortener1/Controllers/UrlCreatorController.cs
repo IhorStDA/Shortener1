@@ -1,9 +1,10 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shortener1.DTO;
+using Shortener1.DTO.Urls;
 using Shortener1.Entities;
 using Shortener1.Services;
+using Shortener1.Services.BackgroundServices;
 
 namespace Shortener1.Controllers
 {
@@ -29,7 +30,7 @@ namespace Shortener1.Controllers
 
         [Authorize]
         [HttpGet("getAll")]
-        [ProducesResponseType(200, Type = typeof(List<UrlOutputDTO>))]
+        [ProducesResponseType(200, Type = typeof(List<UrlOutputDto>))]
         [ProducesResponseType(500)]
         public async Task<IActionResult> GetAll(int pageIndex , int pageSize)
         {
@@ -42,10 +43,10 @@ namespace Shortener1.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(409)]
         [ProducesResponseType(500)]
-        [ProducesResponseType(200, Type = typeof(UrlOutputDTO))]
+        [ProducesResponseType(200, Type = typeof(UrlOutputDto))]
         public async Task<IActionResult> CreateNewShortUrl([FromBody] UrlInputDto urlInputDto)
         {
-            var validationResult = _validator.Validate(urlInputDto);
+            var validationResult = await _validator.ValidateAsync(urlInputDto);
               //check if Url is valid 
             if ( !validationResult.IsValid)
             {
@@ -57,13 +58,13 @@ namespace Shortener1.Controllers
                 return Conflict(ResponseMessages.UrlCreatedFailedMessageUrlIsDuplicate);
             }
 
-            return Ok(await _urlMapService.CreateNewShortenedUrl(urlInputDto, GetUserId()));
+            return Ok( await _urlMapService.CreateNewShortenedUrl(urlInputDto, GetUserId()));
         }
 
 
         [Authorize]
         [HttpPost("getLong")]
-        [ProducesResponseType(200, Type = typeof(UrlOutputDTO))]
+        [ProducesResponseType(200, Type = typeof(UrlOutputDto))]
         [ProducesResponseType(404)]
         public async Task<IActionResult> GetLongUrl([FromBody] UrlInputDto urlInputDto)
         { 
@@ -75,18 +76,18 @@ namespace Shortener1.Controllers
         }
 
         
-        private MarketingData GetMarketingDataForBackground(UrlOutputDTO urlOutPutDto)
+        private MarketingData GetMarketingDataForBackground(UrlOutputDto urlOutPutDto)
         {
             var userAgent = HttpContext.Request.Headers["User-Agent"].ToString();
             var userLanguage = HttpContext.Request.Headers["Accept-Language"].ToString();
-            var ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
-            return new MarketingData(userAgent, userLanguage, ipAddress, urlOutPutDto.UrlMapId);
+            return new MarketingData(userAgent, userLanguage, ipAddress!, urlOutPutDto.UrlMapId);
         }
 
-        private int GetUserId()
+        private string GetUserId()
         {
-            return int.Parse(User.FindFirst("id")!.Value);
+            return User.FindFirst("id")!.Value;
         }
     }
 }
